@@ -171,7 +171,9 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
 //    }
 
     // Create the subscriber
-    sub_ = root_nh.subscribe("/command", 1, &Controller::commandCallback, this);
+    sub_ = root_nh.subscribe("/command", 1, &Controller::commandCallback, this, ros::TransportHints().tcpNoDelay());
+
+	
 
     //subscriber to the ground truth
     std::string robot_name = "hyq";
