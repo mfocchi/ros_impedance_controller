@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
         <arg name="robot_name" default="ur5" />
+        <arg name="gripper" default="false" />
         <arg name="rviz" default="true" />
         <arg name="gui" default="true" />
         <arg name="rviz_conf" default="$(find ros_impedance_controller)/config/operator.rviz"/>
@@ -34,6 +35,7 @@
 		    <arg name="physical_params" value="$(arg physical_params)"/>
 		    <arg name="visual_params" value="$(arg visual_params)"/>
 	     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
+            	    <arg name="gripper" value="$(arg gripper)"/>
 		  </include>
         </group>
   	<group unless="$(arg use_torque_control)">
@@ -44,6 +46,7 @@
             <arg name="physical_params" value="$(arg physical_params)"/>
             <arg name="visual_params" value="$(arg visual_params)"/>
      	    <arg name="transmission_hw_interface" value="hardware_interface/PositionJointInterface"/>
+            <arg name="gripper" value="$(arg gripper)"/>
           </include>
         </group>
 
@@ -65,7 +68,14 @@
 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml" ns="/$(arg robot_name)" command="load"/>
 	<!-- TODO1 understand how to set PD gains in jointpos controller : rosparam file="$(find ur_description)/config/ur5e/sim_controller.yaml" ns="" command="load"/-->	
 	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/> 		
-	<rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5.yaml" ns="/$(arg robot_name)" command="load"/>>
+	
+  	<group unless="$(arg gripper)">
+         <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5.yaml" ns="/$(arg robot_name)" command="load"/>
+        </group>
+  	<group if="$(arg gripper)">
+         <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+        </group>
+	
 
 
         <!-- 5  - Loading the controllers (joint state publisher (install ros-kinetic-joint-state-controller) is necessary for robot_state publisher to compute the TFs) -->
