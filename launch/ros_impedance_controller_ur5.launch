@@ -65,15 +65,17 @@
         <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model ur5 -x $(arg spawn_x) -y $(arg spawn_y) -z $(arg spawn_z)"/>
 
 	<!-- 4 -Loading  controllers settings -->
-	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml" ns="/$(arg robot_name)" command="load"/>
+	
 	<!-- TODO1 understand how to set PD gains in jointpos controller : rosparam file="$(find ur_description)/config/ur5e/sim_controller.yaml" ns="" command="load"/-->	
 	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/> 		
 	
   	<group unless="$(arg gripper)">
-         <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5.yaml" ns="/$(arg robot_name)" command="load"/>
+	 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml" ns="/$(arg robot_name)" command="load"/>
+         	<rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5.yaml" ns="/$(arg robot_name)" command="load"/>
         </group>
   	<group if="$(arg gripper)">
-         <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+		<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+         	<rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_ur5_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
         </group>
 	
 
