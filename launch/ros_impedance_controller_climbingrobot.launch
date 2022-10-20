@@ -48,7 +48,7 @@
 
 	<!-- 4 -Loading  controllers settings -->
 	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/> 		
-	<rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_climbingrobot.yaml" ns="/$(arg robot_name)" command="load"/>>
+        <rosparam file="$(find climbingrobot_description)/config/ros_impedance_controller_climbingrobot.yaml" ns="/$(arg robot_name)" command="load"/>
 
         <!-- 5  - Loading the controllers (joint state publisher (install ros-kinetic-joint-state-controller) is necessary for robot_state publisher to compute the TFs) -->
 	<node name="ros_impedance_controller" pkg="controller_manager" type="spawner" respawn="false"

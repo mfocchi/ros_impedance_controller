@@ -56,7 +56,7 @@
 
 	<!-- 3 Loading  controllers configurations from YAML file to parameter server -->
         <rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/>
-	<rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_$(arg robot_name).yaml" ns="/$(arg robot_name)" command="load"/>>
+	<rosparam file="$(arg find_robot_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
 
         <!-- 4 Loading the controllers into the controller manager -->
         <node name="ros_impedance_controller" pkg="controller_manager" type="spawner" respawn="false"

@@ -58,16 +58,19 @@
 
         <!-- 5 Loading  controllers configurations from YAML file to parameter server -->
         <rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/>
+        <rosparam file="$(find climbingrobot_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
+
+
 
  	<group if="$(arg flywheel4)">
-            <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_solo_fw4.yaml" ns="/$(arg robot_name)" command="load"/>
+            <rosparam file="$(arg find_robot_description)/config/ros_impedance_controller_fw4.yaml" ns="/$(arg robot_name)" command="load"/>
         </group>
         <group if="$(arg flywheel2)">
-            <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_solo_fw2.yaml" ns="/$(arg robot_name)" command="load"/>
+            <rosparam file="$(arg find_robot_description)/config/ros_impedance_controller_fw2.yaml" ns="/$(arg robot_name)" command="load"/>
         </group>
         <group unless="$(arg flywheel4)">
             <group unless="$(arg flywheel2)">
-                <rosparam file="$(find ros_impedance_controller)/config/ros_impedance_controller_solo.yaml" ns="/$(arg robot_name)" command="load"/>
+                <rosparam file="$(arg find_robot_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
             </group>
          </group>
 
