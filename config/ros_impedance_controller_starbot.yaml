@@ -1,0 +1,21 @@
+﻿ros_impedance_controller:
+  type: ros_impedance_controller/Controller
+  joints:
+    - lf_shoulder_pan
+    - rf_shoulder_pan
+    - lh_shoulder_pan
+    - rh_shoulder_pan
+
+
+  gains:
+      lf_shoulder_pan: {p: 100.0, i: 0.0, d: 10}
+      rf_shoulder_pan: {p: 100.0, i: 0.0, d: 10}
+      lh_shoulder_pan: {p: 100.0, i: 0.0, d: 10}
+      rh_shoulder_pan: {p: 100.0, i: 0.0, d: 10}
+    
+  home:
+      lf_shoulder_pan: 0.0
+      rf_shoulder_pan: 0.0
+      lh_shoulder_pan: 0.0
+      rh_shoulder_pan: 0.0
+    
