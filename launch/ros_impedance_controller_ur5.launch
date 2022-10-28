@@ -94,10 +94,12 @@
 		 <remap from="/joint_states" to="/$(arg robot_name)/joint_states"/> 
 	</node>
 
-	<node name="goto0" pkg="ur_description" type="go0" args="0.1" output="screen"/>
-
+	
 
         <!-- 7 run rviz -->
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_conf) -f world" if="$(arg rviz)"/>
+
+	<node name="goto0" pkg="ur_description" type="go0" args="1.0" output="screen"/>
+
 </launch>
 
