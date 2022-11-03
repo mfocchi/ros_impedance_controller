@@ -5,11 +5,10 @@ project(ros_impedance_controller)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
 # ROS
 
-
+find_package( Eigen3 REQUIRED )
 
 find_package(catkin REQUIRED tf controller_interface
-            realtime_tools sensor_msgs message_generation gazebo_msgs rviz_visual_tools
-                        geometry_msgs     REQUIRED)
+            realtime_tools sensor_msgs message_generation gazebo_msgs  geometry_msgs     REQUIRED)
 
 
 add_message_files(
@@ -50,7 +49,7 @@ catkin_package(
 include_directories(
     include  ${GAZEBO_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
-
+    ${EIGEN3_INCLUDE_DIR}
 )
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
