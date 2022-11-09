@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <launch>
-	<arg name="robot_name" default="solo" />
+	<arg name="robot_name" default="go1" />
         <arg name="rviz" default="true" />
         <arg name="gui" default="true" />
         <arg name="rviz_conf" default="$(find ros_impedance_controller)/config/operator.rviz"/>
         <arg name="world_name" default="solo.world"/>
-        <arg name="real_robot" default="false" />
+        <arg name="real_robot" default="true" />
 
 	<!-- if task_period is smaller than sim max_step_size (in world file) it is clamped to that value!!!!!!-->
 	<arg name="task_period" default="0.001" />
@@ -45,12 +45,12 @@
         	<node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name) -x $(arg spawn_x) -y $(arg spawn_y) -z $(arg spawn_z)"/>
 
 		<!-- Get robot to 0 position -->
-        	<node name="goto0" pkg="$(arg robot_name)_description" type="go0" args="1.0" output="screen" />
+        	<node name="goto0" pkg="$(arg robot_name)_description" type="go0" args="1.0 False" output="screen" />
     	</group>
 
 	<group if="$(arg real_robot)">	
 	    <!-- 2 Spawn the hardware interface -->
-            <node name="robot_hardware_interface" pkg="$(arg robot_name)_harware_interface" type="ros_control_node" respawn="false" />
+            <node name="robot_hardware_interface" pkg="$(arg robot_name)_hardware_interface" type="ros_control_node" respawn="false" />
         </group>
   	
 

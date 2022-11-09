@@ -15,8 +15,8 @@ Panels:
         - /TF1/Tree1
         - /PointCloud21
         - /Image1
-      Splitter Ratio: 0.6178160905838013
-    Tree Height: 842
+      Splitter Ratio: 0.6213017702102661
+    Tree Height: 836
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -45,7 +45,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 0.0010000000474974513
+      Cell Size: 0.10000000149011612
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -72,65 +72,95 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        anchor:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        foot:
+        lf_foot:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        lower_link:
+        lf_hip:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        pre-base1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        pre-base2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        pre-base3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        pre_wire1:
+        lf_lowerleg:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        pre_wire2:
+        lf_upperleg:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        upper_link1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        upper_link2:
+        lh_foot:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wire:
+        lh_hip:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        world:
+          Value: true
+        lh_lowerleg:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
+        lh_upperleg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rf_foot:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rf_hip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rf_lowerleg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rf_upperleg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rh_foot:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rh_hip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rh_lowerleg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rh_upperleg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        trunk:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -142,7 +172,7 @@ Visualization Manager:
       Marker Topic: /arrow
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -150,7 +180,7 @@ Visualization Manager:
       Marker Topic: /vis
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -208,6 +238,22 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /point_fixed
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /support_polygon
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 252; 252; 252
@@ -236,7 +282,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.496069431304932
+      Distance: 3.692405939102173
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -244,17 +290,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.013533235527575016
-        Y: -0.16591455042362213
-        Z: -0.5440698266029358
+        X: 0.2459668666124344
+        Y: -0.1108945980668068
+        Z: -0.05813629552721977
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.34979552030563354
+      Pitch: 0.12479634582996368
       Target Frame: base_link
-      Yaw: 1.0992556810379028
+      Yaw: 1.8692562580108643
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 2.606315851211548
@@ -284,7 +330,7 @@ Window Geometry:
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001fd000003d3fc020000000cfb000000100044006900730070006c0061007900730100000014000003d3000000c700fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000000800540069006d006500000003c40000003e0000003700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002f4000000ca0000001600fffffffb0000000a0049006d0061006700650000000318000000ce0000000000000000fb0000000a0049006d006100670065010000027e0000014d0000000000000000000000010000010f000003befc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000000000003be000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000780000000d7fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000001fb0000000800540069006d006501000000000000045000000000000000000000044c000003d300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001fd000003cffc020000000cfb000000100044006900730070006c0061007900730100000016000003cf000000c900fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000000800540069006d006500000003c40000003e0000003900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002f4000000ca0000000000000000fb0000000a0049006d0061006700650000000318000000ce0000001600fffffffb0000000a0049006d006100670065010000027e0000014d0000000000000000000000010000010f000003befc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000000000003be000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000780000000d7fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000001fb0000000800540069006d006501000000000000045000000000000000000000044c000003cf00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -294,5 +340,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1615
-  X: 65
-  Y: 24
+  X: 72
+  Y: 27
