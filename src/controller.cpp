@@ -184,7 +184,6 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
      // Create the PID set service
     set_pids_srv_ = param_node.advertiseService("/set_pids", &Controller::setPidsCallback, this);
 
-
     gt_sub_ = param_node.subscribe("/"+robot_name + "/ground_truth", 1, &Controller::baseGroundTruthCB, this, ros::TransportHints().tcpNoDelay());
 
 
@@ -193,7 +192,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     //pose_pub_rt_.reset(new realtime_tools::RealtimePublisher<BaseState>(param_node, "/"+robot_name + "/base_state", 1));
     //contact_state_pub_rt_.reset(new realtime_tools::RealtimePublisher<gazebo_msgs::ContactsState>(param_node, "/"+robot_name + "/contacts_state", 1));
 
-
+    effort_pid_pub = root_nh.advertise<EffortPid>("effort_pid", 1000);
     return true;
 }
 
@@ -324,6 +323,10 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     //(NB this is not the convention
     //of ros but the convention of robcogen  that we define in ros_impedance_controller_XX.yaml!!!!
     //std::cout << "-----------------------------------" << std::endl;
+    
+    EffortPid msg;
+    msg.name.resize(joint_states_.size());
+    msg.effort_pid.resize(joint_states_.size());
     for (unsigned int i = 0; i < joint_states_.size(); i++)
     {      
     
@@ -342,11 +345,15 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
         //compute PID
         des_joint_efforts_pids_(i) = joint_p_gain_[i]*(des_joint_positions_(i) -  measured_joint_position_(i) ) +
                                      joint_d_gain_[i]*(des_joint_velocities_(i)-joint_states_[i].getVelocity());
+                                     
+        msg.name[i] = joint_names_[i];
+        msg.effort_pid[i]=des_joint_efforts_pids_(i);
         //add PID + FFWD
         joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
         
     }
 
+    effort_pid_pub.publish(msg);
 
       //publish hyq pose for the mapper node
       //uncomment if you want to use BaseState message instead than /solo/groundtruth in python
