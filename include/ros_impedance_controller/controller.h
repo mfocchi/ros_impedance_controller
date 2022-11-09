@@ -25,13 +25,8 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h> //robotname/groudtruth
 #include <ros_impedance_controller/BaseState.h> //robotname/pose
-#include <gazebo_msgs/ContactsState.h>
 
-//TODO contact sensor
-//#include <gazebo/sensors/SensorManager.hh>
-//#include <gazebo/sensors/ContactSensor.hh>
-
-#include <realtime_tools/realtime_publisher.h>
+typedef Eigen::Matrix<double, 6,1> butterFilterParams;  
 
 namespace ros_impedance_controller
 {
@@ -75,20 +70,22 @@ public:
 
 private:
 
+
+
     void commandCallback(const sensor_msgs::JointState &msg);
     bool setPidsCallback(set_pids::Request& req,
                          set_pids::Response& res);
+    //no longer used
     void baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg);
     
 
-    ros::Subscriber sub_;
+    ros::Subscriber command_sub_;
+    //no longer used
     ros::Subscriber gt_sub_;
     ros::ServiceServer set_pids_srv_;
     ros::ServiceServer get_map_srv_;
 
-    std::shared_ptr<realtime_tools::RealtimePublisher<BaseState>> pose_pub_rt_;
-    std::shared_ptr<realtime_tools::RealtimePublisher<gazebo_msgs::ContactsState>> contact_state_pub_rt_;
-    
+    std::shared_ptr<realtime_tools::RealtimePublisher<BaseState>> pose_pub_rt_;   
     ros::Publisher effort_pid_pub;
     
 
@@ -112,25 +109,26 @@ private:
     std::vector<double> joint_d_gain_;
     std::vector<std::string> joint_type_;
     Eigen::VectorXd measured_joint_position_;
+    Eigen::VectorXd measured_joint_velocity_;
     
     /** @brief Desired joint efforts computed by the PIDs */
     Eigen::VectorXd des_joint_efforts_pids_;
-    tf::Quaternion q_base;
-    tf::Vector3 base_pos_w;
-    geometry_msgs::Twist base_twist_w;
-    //TODO contact state
-    //std::vector<std::shared_ptr<gazebo::sensors::ContactSensor> > foot_sensors_;
+    
+    // no longer used
+    //tf::Quaternion q_base;
+    //tf::Vector3 base_pos_w;
+    //geometry_msgs::Twist base_twist_w;
+
     std::vector<std::vector<double> > force_;
     std::vector<std::vector<double> > torque_;
     std::vector<std::vector<double> > normal_;
 
     ros::NodeHandle * root_nh_;
     bool verbose = false;
-    //dls::perception::GridMapTerrainROS grid_map_terrain_;
-    
-    
-    
-   
+    bool real_robot = false;
+
+    std::vector<butterFilterParams> velocityFilterBuffer;
+    void filt(const double raw, butterFilterParams & filt);
 
 };
 

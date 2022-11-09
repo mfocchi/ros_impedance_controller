@@ -49,7 +49,6 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
 
 //    }
 
-
     hardware_interface::EffortJointInterface* eff_hw = robot_hw->get<hardware_interface::EffortJointInterface>();
 
     if(!eff_hw)
@@ -98,6 +97,12 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     des_joint_efforts_.fill(0.0);
     measured_joint_position_.resize(joint_states_.size());
     measured_joint_position_.fill(0.0);
+
+    measured_joint_velocity_.resize(joint_states_.size());
+    measured_joint_velocity_.fill(0.0);
+    velocityFilterBuffer.resize(12);
+
+
     joint_type_.resize(joint_states_.size());
     std::fill(joint_type_.begin(), joint_type_.end(), "revolute");
 
@@ -134,9 +139,16 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
 
        controller_nh.getParam("joint_type/" + joint_names_[i], joint_type_[i]);
 
-      //get statrup go0 position from yaml (TODO srdf)
+       //get statrup go0 position from yaml (TODO srdf)
        controller_nh.getParam("home/" + joint_names_[i], des_joint_positions_[i]);
 
+       //init velocity filters
+       velocityFilterBuffer[i][0] = 0.0;
+       velocityFilterBuffer[i][1] = 0.0;
+       velocityFilterBuffer[i][2] = 0.0;
+       velocityFilterBuffer[i][3] = 0.0;
+       velocityFilterBuffer[i][4] = 0.0;
+       velocityFilterBuffer[i][5] = 0.0;
     }
 
 
@@ -152,45 +164,23 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
 //                des_joint_positions_.push_back(tmp.second);
 
 
-
-
-//contact sensor TODO
-    //foot switch
-//    foot_sensors_.resize(4);
-//    std::vector<std::string> foot_sensor_names(4);
-//    foot_sensor_names[0] = std::string("lf_foot_contact_sensor");
-//    foot_sensor_names[1] = std::string("rf_foot_contact_sensor");
-//    foot_sensor_names[2] = std::string("lh_foot_contact_sensor");
-//    foot_sensor_names[3] = std::string("rh_foot_contact_sensor");
-//    for (int n = 0; n < foot_sensors_.size(); n++) {
-//        foot_sensors_[n] = std::dynamic_pointer_cast<gazebo::sensors::ContactSensor>
-//                (gazebo::sensors::SensorManager::Instance()->GetSensor(foot_sensor_names[n]));
-//        if (!this->foot_sensors_[n]) 	{
-//            ROS_ERROR_STREAM("Could not find foot sensor \"" << foot_sensor_names[n] << "\".");
-//        }
-//    }
-
     // Create the subscriber
-    sub_ = root_nh.subscribe("/command", 1, &Controller::commandCallback, this, ros::TransportHints().tcpNoDelay());
-
-	
+    command_sub_ = root_nh.subscribe("/command", 1, &Controller::commandCallback, this, ros::TransportHints().tcpNoDelay());
 
     //subscriber to the ground truth
     std::string robot_name = "hyq";
     ros::NodeHandle param_node;
     param_node.getParam("/robot_name", robot_name);
-
+    if (param_node.hasParam("/real_robot"))
+    {	
+	param_node.getParam("/real_robot", real_robot);
+    }
     std::cout<< red<< "ROBOT NAME IS : "<< robot_name<<reset <<std::endl;
      // Create the PID set service
     set_pids_srv_ = param_node.advertiseService("/set_pids", &Controller::setPidsCallback, this);
 
-    gt_sub_ = param_node.subscribe("/"+robot_name + "/ground_truth", 1, &Controller::baseGroundTruthCB, this, ros::TransportHints().tcpNoDelay());
-
-
-
-    //rt publisher (uncomment if you need them)
-    //pose_pub_rt_.reset(new realtime_tools::RealtimePublisher<BaseState>(param_node, "/"+robot_name + "/base_state", 1));
-    //contact_state_pub_rt_.reset(new realtime_tools::RealtimePublisher<gazebo_msgs::ContactsState>(param_node, "/"+robot_name + "/contacts_state", 1));
+    // no longer used we publish TF in base controller	
+    //gt_sub_ = param_node.subscribe("/"+robot_name + "/ground_truth", 1, &Controller::baseGroundTruthCB, this, ros::TransportHints().tcpNoDelay());
 
     effort_pid_pub = root_nh.advertise<EffortPid>("effort_pid", 1000);
     return true;
@@ -202,7 +192,6 @@ void Controller::starting(const ros::Time& time)
     ROS_DEBUG("Starting Controller");
 
 }
-
 
 
 bool Controller::setPidsCallback(set_pids::Request& req,
@@ -278,34 +267,80 @@ void Controller::commandCallback(const sensor_msgs::JointState& msg)
 void Controller::baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg)
 {
 
-    static tf::TransformBroadcaster br;
-    tf::Transform w_transform_b;
+    //static tf::TransformBroadcaster br;
+    //tf::Transform w_transform_b;
 
     //orientation of base frame
+/*
     q_base.setX(msg->pose.pose.orientation.x);
     q_base.setY(msg->pose.pose.orientation.y);
     q_base.setZ(msg->pose.pose.orientation.z);
     q_base.setW(msg->pose.pose.orientation.w);
     //position of base frame
     base_pos_w = tf::Vector3(msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z);
-
+*/
     //get twist
+/*
     base_twist_w.linear.x= msg->twist.twist.linear.x;
     base_twist_w.linear.y = msg->twist.twist.linear.y;
     base_twist_w.linear.z = msg->twist.twist.linear.z;
     base_twist_w.angular.x = msg->twist.twist.angular.x;
     base_twist_w.angular.y = msg->twist.twist.angular.y;
     base_twist_w.angular.z = msg->twist.twist.angular.z;
-
+*/
 
     //the vector of the base is in the world frame, so to apply to the base frame I should rotate it to the base frame before
-    tf::Vector3 world_origin_w(-msg->pose.pose.position.x,-msg->pose.pose.position.y,-msg->pose.pose.position.z);
-    tf::Vector3 world_origin_b = tf::quatRotate(q_base.inverse(), world_origin_w);
+    //tf::Vector3 world_origin_w(-msg->pose.pose.position.x,-msg->pose.pose.position.y,-msg->pose.pose.position.z);
+    //tf::Vector3 world_origin_b = tf::quatRotate(q_base.inverse(), world_origin_w);
 
     //this is the transform from base to world to publish the world transform for rviz
     //w_transform_b.setRotation(q_base.inverse());
     //w_transform_b.setOrigin(world_origin_b);
     //br.sendTransform(tf::StampedTransform(w_transform_b, ros::Time::now(), "/base_link", "/world" ));
+}
+
+void filt(double raw, butterFilterParams & buffer)
+{
+//notch filter cut-off 50 Hz; BW 20 Hz.
+//double a[3] = {1.0000000e+00,  -1.7633 ,  0.8541};
+//double b[3] = {0.9270 ,  -1.7633 ,  0.9270};
+//notch filter cut-off 110 Hz; BW 220 Hz.
+//double a[3] = {1.0000000e+00,  -0.8433 ,  0.0945};
+//double b[3] = {0.5473 ,  -0.8433 ,  0.5473};
+//2nd order butterworth cut 150 for fs = 1000 Hz
+//double a[3] = {1.0000000e+00,  -0.7478 ,  0.2722};
+//double b[3] = {0.1311 ,  0.2622 ,  0.1311};
+//2nd order butterworth cut 150 for fs = 2000 Hz
+//double a[3] = {1.0000 ,  -1.349 ,  0.5140};
+//double b[3] = {0.0413 ,  0.0825 ,  0.0413};
+//2nd order butterworth cut 150 for fs = 800 Hz
+//double a[3] = {1.0000 ,  -0.4629 ,  0.2097};
+//double b[3] = {0.1867 ,   0.3734 ,  0.1867};
+//2nd order butterworth cut 250 for fs = 1000 Hz
+    double a[3] = { 1.0000, 0.0000, 0.1716 };
+    double b[3] = { 0.2929, 0.5858, 0.2929 };
+//2nd order butterworth cut 40
+//double a[3] = {1.0000000e+00,  -3.6952738e-01 ,  1.9581571e-01};
+//double b[3] = {2.0657208e-01 ,  4.1314417e-01 ,  2.0657208e-01};
+//2nd order butterworth 30
+//double a[3] = {1.0000000e+00,  -7.4778918e-01,   2.7221494e-01};
+//double b[3] = {1.3110644e-01 ,  2.6221288e-01,   1.3110644e-01};
+//2nd order butterworth 15
+//double a[3] = {1.0000000e+00 , -1.3489677e+00 ,  5.1398189e-01 };
+//double b[3] = {4.1253537e-02 ,  8.2507074e-02,   4.1253537e-02};
+//2nd order butterworth 8
+//double a[3] = {1.0000000e+00 , -1.6474600e+00 ,  7.0089678e-01 };
+//double b[3] = {1.3359200e-02 ,  2.6718400e-02 ,  1.3359200e-02  };
+//first 3 elements are y0 y1 y2 second 3 x0 x1 x2
+    int input = 3;
+    buffer[input + 0] = raw;
+    buffer[0] = -a[1] * buffer[1] - a[2] * buffer[2] + b[0] * buffer[input + 0]
+            + b[1] * buffer[input + 1] + b[2] * buffer[input + 2];
+
+    buffer[input + 2] = buffer[input + 1];
+    buffer[input + 1] = buffer[input + 0];
+    buffer[2] = buffer[1];
+    buffer[1] = buffer[0];
 }
 
 void Controller::update(const ros::Time& time, const ros::Duration& period)
@@ -316,12 +351,8 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
 //    std::cout<<"des_joint_efforts_: " << des_joint_efforts_.transpose()<<std::endl;
 //    std::cout<<"des_joint_velocities_: " << des_joint_velocities_.transpose()<<std::endl;
 //    std::cout<<"des_joint_positions_: " << des_joint_positions_.transpose()<<std::endl;
-
-
-
     // Write to the hardware interface
-    //(NB this is not the convention
-    //of ros but the convention of robcogen  that we define in ros_impedance_controller_XX.yaml!!!!
+    //(NB this is not the convention of ros but the convention that we define in ros_impedance_controller_XX.yaml!!!!
     //std::cout << "-----------------------------------" << std::endl;
     
     EffortPid msg;
@@ -331,9 +362,16 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     {      
     
         measured_joint_position_(i) = joint_states_[i].getPosition();
+	
+	if (real_robot)
+	{
+		filt(joint_states_[i].getVelocity(), velocityFilterBuffer[i]);
+		measured_joint_velocity_(i) = velocityFilterBuffer[i][0];
+	} else {
+ 
+		measured_joint_velocity_(i) = joint_states_[i].getVelocity();
+	}
 
-
-        
         //std::cout << "***** joint: "<< joint_names_[i] << std::endl;
         //std::cout << "joint des:   "<< des_joint_positions_(i) << std::endl;
         //std::cout << "joint pos:   "<< joint_states_[i].getPosition() << std::endl;
@@ -344,7 +382,7 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     
         //compute PID
         des_joint_efforts_pids_(i) = joint_p_gain_[i]*(des_joint_positions_(i) -  measured_joint_position_(i) ) +
-                                     joint_d_gain_[i]*(des_joint_velocities_(i)-joint_states_[i].getVelocity());
+                                     joint_d_gain_[i]*(des_joint_velocities_(i) - measured_joint_velocity_(i)  );
                                      
         msg.name[i] = joint_names_[i];
         msg.effort_pid[i]=des_joint_efforts_pids_(i);
@@ -354,110 +392,6 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     }
 
     effort_pid_pub.publish(msg);
-
-      //publish hyq pose for the mapper node
-      //uncomment if you want to use BaseState message instead than /solo/groundtruth in python
-//      BaseState pose_msg;
-//      pose_msg.header.stamp =ros::Time::now();
-//      pose_msg.header.frame_id = "world";
-//      pose_msg.pose.position.x = base_pos_w.x();
-//      pose_msg.pose.position.y = base_pos_w.y();
-//      pose_msg.pose.position.z = base_pos_w.z();
-//      pose_msg.pose.orientation.w = q_base.w();
-//      pose_msg.pose.orientation.x = q_base.x();
-//      pose_msg.pose.orientation.y = q_base.y();
-//      pose_msg.pose.orientation.z = q_base.z();
-
-//      pose_msg.twist.linear.x = base_twist_w.linear.x;
-//      pose_msg.twist.linear.y = base_twist_w.linear.y;
-//      pose_msg.twist.linear.z = base_twist_w.linear.z;
-//      pose_msg.twist.angular.x = base_twist_w.angular.x;
-//      pose_msg.twist.angular.y = base_twist_w.angular.y;
-//      pose_msg.twist.angular.z = base_twist_w.angular.z;
-
-
-//      if (pose_pub_rt_->trylock()){
-//        pose_pub_rt_->msg_ = pose_msg;
-//        pose_pub_rt_->unlockAndPublish();
-//      }
-
-    //get virtual foot switch
-
-//    std::vector<gazebo::physics::LinkPtr> lowerleg_link(4);
-//    lowerleg_link[0] = sim_model_->GetLink("lf_lowerleg");
-//    lowerleg_link[1] = sim_model_->GetLink("rf_lowerleg");
-//    lowerleg_link[2] = sim_model_->GetLink("lh_lowerleg");
-//    lowerleg_link[3] = sim_model_->GetLink("rh_lowerleg");
-
-//     for (int n = 0; n < foot_sensors_.size(); n++) {
-//            gazebo::msgs::Contacts contacts;
-//            contacts = foot_sensors_[n]->Contacts();
-
-//        //the wrench is in the last link where the foot is lumped that is the lowerleg! so it is expressed in the lowerleg
-//        //map from lowerleg frame to world
-//        gazebo::math::Pose link_pose = lowerleg_link[n]->GetWorldPose();
-//        gazebo::math::Vector3 forceW = link_pose.rot.RotateVector(
-//                                      gazebo::math::Vector3( contacts.contact(0).wrench(0).body_1_wrench().force().x(),
-//                                                            contacts.contact(0).wrench(0).body_1_wrench().force().y(),
-//                                                                contacts.contact(0).wrench(0).body_1_wrench().force().z()));
-
-
-//        //these forces are in the world frame!
-//        force_[n][0] = forceW.x;
-//        force_[n][1] = forceW.y;
-//        force_[n][2] = forceW.z;
-//        //std::cout<<"force :"<<force_[n][0]<<"  "<< force_[n][1]<<"  "<< force_[n][2] <<std::endl;
-
-//        //the noraml is already in the world!!!
-//        normal_[n][0]  = contacts.contact(0).normal(0).x();
-//        normal_[n][1]  = contacts.contact(0).normal(0).y();
-//        normal_[n][2]  = contacts.contact(0).normal(0).z();
-//        //std::cout<<"normal :"<<normal.transpose()<<std::endl;
-//    } else {
-//        contact_[n] = false;
-//        force_[n][0]=0.0;
-//        force_[n][1]=0.0;
-//        force_[n][2]=0.0;}
-//    }
-
-//    //publish contactstate
-//    std::vector<gazebo_msgs::ContactState> contacts_state(4);
-//    std::vector<geometry_msgs::Wrench> tmp_wrench(1);
-//    std::vector<geometry_msgs::Vector3> tmp_normal(1);
-//    std::vector<double> tmp_contact_bool(1);
-//    contacts_state[0].info = "LF";
-//    contacts_state[1].info = "RF";
-//    contacts_state[2].info = "LH";
-//    contacts_state[3].info = "RH";
-
-//    for (int leg = 0; leg < 4; leg++)
-//    {
-//            tmp_wrench[0].force.x = force_[leg][0];
-//            tmp_wrench[0].force.y = force_[leg][1];
-//            tmp_wrench[0].force.z = force_[leg][2];
-//            contacts_state[leg].wrenches = tmp_wrench;
-
-//            tmp_normal[0].x = normal_[leg][0];
-//            tmp_normal[0].y = normal_[leg][1];
-//            tmp_normal[0].z = normal_[leg][2];
-//            contacts_state[leg].contact_normals = tmp_normal;
-
-//            tmp_contact_bool[0] = (double)contact_[leg];
-//            contacts_state[leg].depths = tmp_contact_bool;
-//     }
-
-//        contact_state_pub_->msg_.states = contacts_state;
-//        contact_state_pub_->msg_.header.stamp = ros::Time::now();
-//
-    std::vector<gazebo_msgs::ContactState> contacts_message(4);
-    gazebo_msgs::ContactsState contact_msg;
-    contact_msg.states = contacts_message;
-    contact_msg.header.stamp = ros::Time::now();
-    //uncomment if you want to subscribe to the ground truth in python receivecontact
-//    if (contact_state_pub_rt_->trylock()){
-//      contact_state_pub_rt_->msg_ = contact_msg;
-//      contact_state_pub_rt_->unlockAndPublish();
-//    }
 }
 
 
