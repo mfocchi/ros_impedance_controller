@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-	<arg name="robot_name" default="solo" />
+	<arg name="robot_name" default="go1" />
         <arg name="rviz" default="true" />
         <arg name="gui" default="true" />
         <arg name="rviz_conf" default="$(find ros_impedance_controller)/config/operator.rviz"/>
@@ -50,7 +50,7 @@
 
 	<group if="$(arg real_robot)">	
 	    <!-- 2 Spawn the hardware interface -->
-            <node name="robot_hardware_interface" pkg="$(arg robot_name)_harware_interface" type="ros_control_node" respawn="false" />
+            <node name="robot_hardware_interface" pkg="$(arg robot_name)_hardware_interface" type="ros_control_node" respawn="false" />
         </group>
   	
 
