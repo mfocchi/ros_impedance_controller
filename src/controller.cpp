@@ -97,11 +97,8 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     des_joint_efforts_.fill(0.0);
     measured_joint_position_.resize(joint_states_.size());
     measured_joint_position_.fill(0.0);
-
     measured_joint_velocity_.resize(joint_states_.size());
     measured_joint_velocity_.fill(0.0);
-    velocityFilterBuffer.resize(12);
-
 
     joint_type_.resize(joint_states_.size());
     std::fill(joint_type_.begin(), joint_type_.end(), "revolute");
@@ -142,13 +139,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
        //get statrup go0 position from yaml (TODO srdf)
        controller_nh.getParam("home/" + joint_names_[i], des_joint_positions_[i]);
 
-       //init velocity filters
-       velocityFilterBuffer[i][0] = 0.0;
-       velocityFilterBuffer[i][1] = 0.0;
-       velocityFilterBuffer[i][2] = 0.0;
-       velocityFilterBuffer[i][3] = 0.0;
-       velocityFilterBuffer[i][4] = 0.0;
-       velocityFilterBuffer[i][5] = 0.0;
+
     }
 
 
@@ -171,10 +162,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     std::string robot_name = "hyq";
     ros::NodeHandle param_node;
     param_node.getParam("/robot_name", robot_name);
-    if (param_node.hasParam("/real_robot"))
-    {	
-	param_node.getParam("/real_robot", real_robot);
-    }
+
     std::cout<< red<< "ROBOT NAME IS : "<< robot_name<<reset <<std::endl;
      // Create the PID set service
     set_pids_srv_ = param_node.advertiseService("/set_pids", &Controller::setPidsCallback, this);
@@ -299,49 +287,6 @@ void Controller::baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg)
     //br.sendTransform(tf::StampedTransform(w_transform_b, ros::Time::now(), "/base_link", "/world" ));
 }
 
-void filt(double raw, butterFilterParams & buffer)
-{
-//notch filter cut-off 50 Hz; BW 20 Hz.
-//double a[3] = {1.0000000e+00,  -1.7633 ,  0.8541};
-//double b[3] = {0.9270 ,  -1.7633 ,  0.9270};
-//notch filter cut-off 110 Hz; BW 220 Hz.
-//double a[3] = {1.0000000e+00,  -0.8433 ,  0.0945};
-//double b[3] = {0.5473 ,  -0.8433 ,  0.5473};
-//2nd order butterworth cut 150 for fs = 1000 Hz
-//double a[3] = {1.0000000e+00,  -0.7478 ,  0.2722};
-//double b[3] = {0.1311 ,  0.2622 ,  0.1311};
-//2nd order butterworth cut 150 for fs = 2000 Hz
-//double a[3] = {1.0000 ,  -1.349 ,  0.5140};
-//double b[3] = {0.0413 ,  0.0825 ,  0.0413};
-//2nd order butterworth cut 150 for fs = 800 Hz
-//double a[3] = {1.0000 ,  -0.4629 ,  0.2097};
-//double b[3] = {0.1867 ,   0.3734 ,  0.1867};
-//2nd order butterworth cut 250 for fs = 1000 Hz
-    double a[3] = { 1.0000, 0.0000, 0.1716 };
-    double b[3] = { 0.2929, 0.5858, 0.2929 };
-//2nd order butterworth cut 40
-//double a[3] = {1.0000000e+00,  -3.6952738e-01 ,  1.9581571e-01};
-//double b[3] = {2.0657208e-01 ,  4.1314417e-01 ,  2.0657208e-01};
-//2nd order butterworth 30
-//double a[3] = {1.0000000e+00,  -7.4778918e-01,   2.7221494e-01};
-//double b[3] = {1.3110644e-01 ,  2.6221288e-01,   1.3110644e-01};
-//2nd order butterworth 15
-//double a[3] = {1.0000000e+00 , -1.3489677e+00 ,  5.1398189e-01 };
-//double b[3] = {4.1253537e-02 ,  8.2507074e-02,   4.1253537e-02};
-//2nd order butterworth 8
-//double a[3] = {1.0000000e+00 , -1.6474600e+00 ,  7.0089678e-01 };
-//double b[3] = {1.3359200e-02 ,  2.6718400e-02 ,  1.3359200e-02  };
-//first 3 elements are y0 y1 y2 second 3 x0 x1 x2
-    int input = 3;
-    buffer[input + 0] = raw;
-    buffer[0] = -a[1] * buffer[1] - a[2] * buffer[2] + b[0] * buffer[input + 0]
-            + b[1] * buffer[input + 1] + b[2] * buffer[input + 2];
-
-    buffer[input + 2] = buffer[input + 1];
-    buffer[input + 1] = buffer[input + 0];
-    buffer[2] = buffer[1];
-    buffer[1] = buffer[0];
-}
 
 void Controller::update(const ros::Time& time, const ros::Duration& period)
 {
@@ -362,16 +307,7 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     {      
     
         measured_joint_position_(i) = joint_states_[i].getPosition();
-	
-	if (real_robot)
-	{
-		filt(joint_states_[i].getVelocity(), velocityFilterBuffer[i]);
-		measured_joint_velocity_(i) = velocityFilterBuffer[i][0];
-	} else {
- 
-		measured_joint_velocity_(i) = joint_states_[i].getVelocity();
-	}
-
+	measured_joint_velocity_(i) = joint_states_[i].getVelocity();
         //std::cout << "***** joint: "<< joint_names_[i] << std::endl;
         //std::cout << "joint des:   "<< des_joint_positions_(i) << std::endl;
         //std::cout << "joint pos:   "<< joint_states_[i].getPosition() << std::endl;

@@ -26,7 +26,7 @@
 #include <nav_msgs/Odometry.h> //robotname/groudtruth
 #include <ros_impedance_controller/BaseState.h> //robotname/pose
 
-typedef Eigen::Matrix<double, 6,1> butterFilterParams;  
+
 
 namespace ros_impedance_controller
 {
@@ -125,10 +125,6 @@ private:
 
     ros::NodeHandle * root_nh_;
     bool verbose = false;
-    bool real_robot = false;
-
-    std::vector<butterFilterParams> velocityFilterBuffer;
-    void filt(const double raw, butterFilterParams & filt);
 
 };
 
