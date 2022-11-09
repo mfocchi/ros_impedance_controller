@@ -4,6 +4,8 @@
 // Ros
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+#include <ros_impedance_controller/EffortPid.h>
+#include <ros_impedance_controller/get_effort_pid.h>
 #include <ros_impedance_controller/pid.h>
 #include <ros_impedance_controller/set_pids.h>
 // PluginLib
@@ -77,6 +79,7 @@ private:
     bool setPidsCallback(set_pids::Request& req,
                          set_pids::Response& res);
     void baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg);
+    
 
     ros::Subscriber sub_;
     ros::Subscriber gt_sub_;
@@ -85,6 +88,9 @@ private:
 
     std::shared_ptr<realtime_tools::RealtimePublisher<BaseState>> pose_pub_rt_;
     std::shared_ptr<realtime_tools::RealtimePublisher<gazebo_msgs::ContactsState>> contact_state_pub_rt_;
+    
+    ros::Publisher effort_pid_pub;
+    
 
     /** @brief Number of joints */
     unsigned int num_joints_;
@@ -121,6 +127,10 @@ private:
     ros::NodeHandle * root_nh_;
     bool verbose = false;
     //dls::perception::GridMapTerrainROS grid_map_terrain_;
+    
+    
+    
+   
 
 };
 

@@ -20,6 +20,7 @@ add_message_files(
   BaseState.msg
   ContactsState.msg
   Forces.msg
+  EffortPid.msg
 )
 
 add_service_files(
@@ -28,6 +29,7 @@ add_service_files(
   FILES
   set_pids.srv
   get_map.srv
+  get_effort_pid.srv
 )
 
 generate_messages(DEPENDENCIES geometry_msgs)
