@@ -170,7 +170,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     // no longer used we publish TF in base controller	
     //gt_sub_ = param_node.subscribe("/"+robot_name + "/ground_truth", 1, &Controller::baseGroundTruthCB, this, ros::TransportHints().tcpNoDelay());
 
-    effort_pid_pub = root_nh.advertise<EffortPid>("effort_pid", 1000);
+    effort_pid_pub = root_nh.advertise<EffortPid>("effort_pid", 1);
     return true;
 }
 
