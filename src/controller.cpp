@@ -89,6 +89,8 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     // Resize the variables
     des_joint_positions_.resize(joint_states_.size());
     des_joint_positions_.fill(0.0);
+    integral_action_old_.resize(joint_states_.size());
+    integral_action_old_.fill(0.0);
     des_joint_velocities_.resize(joint_states_.size());
     des_joint_velocities_.fill(0.0);
     des_joint_efforts_.resize(joint_states_.size());
@@ -130,6 +132,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
            ROS_ERROR("PID gains must be positive!");
            return false;
        }
+       joint_i_gain_old_ =  joint_i_gain_;
        ROS_DEBUG("P value for joint %i is: %f",i,joint_p_gain_[i]);
        ROS_DEBUG("I value for joint %i is: %f",i,joint_i_gain_[i]);
        ROS_DEBUG("D value for joint %i is: %f",i,joint_d_gain_[i]);
@@ -209,6 +212,11 @@ bool Controller::setPidsCallback(set_pids::Request& req,
                 if(req.data[i].i_value>=0.0)
                 {
                     joint_i_gain_[j] = req.data[i].i_value;
+                    if (joint_i_gain_[j] != joint_i_gain_old_[j])
+                    {
+                        //reset integral any time there is a change in the integral gain
+                        integral_action_old_[j] = 0.0;
+                    }
                     if (verbose)
                        std::cout<<"Set I gain for joint "<< joint_names_[j] << " to: "<<joint_i_gain_[j]<<std::endl;
                 }
@@ -308,6 +316,8 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     
         measured_joint_position_(i) = joint_states_[i].getPosition();
 	measured_joint_velocity_(i) = joint_states_[i].getVelocity();
+        double joint_pos_error = des_joint_positions_(i) - measured_joint_position_(i);
+        double integral_action = integral_action_old_[i] + joint_i_gain_[i]*joint_pos_error*period.toSec();
         //std::cout << "***** joint: "<< joint_names_[i] << std::endl;
         //std::cout << "joint des:   "<< des_joint_positions_(i) << std::endl;
         //std::cout << "joint pos:   "<< joint_states_[i].getPosition() << std::endl;
@@ -318,8 +328,11 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     
         //compute PID
         des_joint_efforts_pids_(i) = joint_p_gain_[i]*(des_joint_positions_(i) -  measured_joint_position_(i) ) +
-                                     joint_d_gain_[i]*(des_joint_velocities_(i) - measured_joint_velocity_(i)  );
-                                     
+                                     joint_d_gain_[i]*(des_joint_velocities_(i) - measured_joint_velocity_(i) ) +
+                                     integral_action;
+
+        integral_action_old_[i] = integral_action;
+
         msg.name[i] = joint_names_[i];
         msg.effort_pid[i]=des_joint_efforts_pids_(i);
         //add PID + FFWD

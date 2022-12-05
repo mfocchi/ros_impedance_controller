@@ -99,12 +99,16 @@ private:
     Eigen::VectorXd des_joint_efforts_;
     /** @brief Desired joint positions */
     Eigen::VectorXd des_joint_positions_;
+    /** @brief Old joint error */
+    Eigen::VectorXd integral_action_old_;
     /** @brief Desired joint velocities */
     Eigen::VectorXd des_joint_velocities_;
     /** @brief Actual P value for the joints PID controller */
     std::vector<double> joint_p_gain_;
     /** @brief Actual I value for the joints PID controller */
     std::vector<double> joint_i_gain_;
+    /** @brief Previous I value for the joints PID controller */
+    std::vector<double> joint_i_gain_old_;
     /** @brief Actual D value for the joints PID controller */
     std::vector<double> joint_d_gain_;
     std::vector<std::string> joint_type_;
