@@ -2,6 +2,7 @@
 <launch>
         <arg name="robot_name" default="ur5" />
         <arg name="gripper" default="false" />
+        <arg name="soft_gripper" default="false" />
         <arg name="rviz" default="true" />
         <arg name="gui" default="true" />
         <arg name="rviz_conf" default="$(find ros_impedance_controller)/config/operator.rviz"/>
@@ -37,8 +38,10 @@
 		    <arg name="visual_params" value="$(arg visual_params)"/>
 	     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
             	    <arg name="gripper" value="$(arg gripper)"/>
+            	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
 		  </include>
         </group>
+        
   	<group unless="$(arg use_torque_control)">
          <include file="$(find ur_description)/launch/upload.launch">
             <arg name="gazebo" value="$(arg gazebo)" />
@@ -48,6 +51,7 @@
             <arg name="visual_params" value="$(arg visual_params)"/>
      	    <arg name="transmission_hw_interface" value="hardware_interface/PositionJointInterface"/>
             <arg name="gripper" value="$(arg gripper)"/>
+            <arg name="soft_gripper" value="$(arg soft_gripper)"/>
           </include>
         </group>
 
@@ -76,8 +80,15 @@
          	<rosparam file="$(find ur_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
         </group>
   	<group if="$(arg gripper)">
-		<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
-         	<rosparam file="$(find ur_description)/config/ros_impedance_controller_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+  		<group if="$(arg soft_gripper)">
+			<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers_soft_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+		 	<rosparam file="$(find ur_description)/config/ros_impedance_controller_soft_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+		</group>
+		
+		<group unless="$(arg gripper)">	
+		 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+         		<rosparam file="$(find ur_description)/config/ros_impedance_controller_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
+         	 </group>			
         </group>
 	
 
