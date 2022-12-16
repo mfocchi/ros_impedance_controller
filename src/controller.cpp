@@ -86,6 +86,12 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     assert(joint_states_.size()>0);
 
 
+   if (controller_nh.getParam("discrete_implementation", discrete_implementation))
+   {
+       std::cout<< green<< "Discrete implementation of PID control! (low the gains)"<< reset <<std::endl; 
+   }
+
+
     // Resize the variables
     des_joint_positions_.resize(joint_states_.size());
     des_joint_positions_.fill(0.0);
@@ -96,11 +102,37 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     des_joint_efforts_.resize(joint_states_.size());
     des_joint_efforts_.fill(0.0);
     des_joint_efforts_pids_.resize(joint_states_.size());
-    des_joint_efforts_.fill(0.0);
+    des_joint_efforts_pids_.fill(0.0);
     measured_joint_position_.resize(joint_states_.size());
     measured_joint_position_.fill(0.0);
     measured_joint_velocity_.resize(joint_states_.size());
     measured_joint_velocity_.fill(0.0);
+
+    // discrete implementation 
+    error_.resize(joint_states_.size());
+    error_.fill(0.0);
+    error1_.resize(joint_states_.size());
+    error1_.fill(0.0);    
+    error2_.resize(joint_states_.size());
+    error2_.fill(0.0);
+    out1_.resize(joint_states_.size());
+    out1_.fill(0.0);    
+    out2_.resize(joint_states_.size());
+    out2_.fill(0.0);
+    
+    a0.resize(joint_states_.size());
+    a0.fill(0.0);
+    a1.resize(joint_states_.size());
+    a1.fill(0.0);    
+    a2.resize(joint_states_.size());
+    a2.fill(0.0);
+    b0.resize(joint_states_.size());
+    b0.fill(0.0);    
+    b1.resize(joint_states_.size());
+    b1.fill(0.0);
+    b2.resize(joint_states_.size());
+    b2.fill(0.0);
+
 
     joint_type_.resize(joint_states_.size());
     std::fill(joint_type_.begin(), joint_type_.end(), "revolute");
@@ -183,6 +215,37 @@ void Controller::starting(const ros::Time& time)
     ROS_DEBUG("Starting Controller");
 
 }
+
+void Controller::updateDiscreteGains(const std::vector<double> & joint_p_gain_, const std::vector<double> & joint_d_gain_,  const std::vector<double> & joint_i_gain_, const double & Ts)
+{
+    double N = 1000.;
+    for (unsigned int i = 0; i < joint_states_.size(); i++)
+    { 
+        a0[i] = (1+N*Ts);
+        a1[i] = -(2 + N*Ts);
+        a2[i] = 1;
+        b0[i] = joint_p_gain_[i]*(1+N*Ts) + joint_i_gain_[i]*Ts*(1+N*Ts) + joint_d_gain_[i]*N;
+
+
+        b1[i] = -(joint_p_gain_[i]*(2+N*Ts) + joint_i_gain_[i]*Ts + 2*joint_d_gain_[i]*N);
+        b2[i] = joint_p_gain_[i] + joint_d_gain_[i]*N;
+
+              
+        // std::cout<<"joint_p_gain_: " <<i << "  " << joint_p_gain_[i]<<std::endl;
+        // std::cout<<"joint_d_gain_: " <<i << "  " << joint_d_gain_[i]<<std::endl;
+        //     std::cout<<"joint_i_gain_: " <<i << "  " << joint_i_gain_[i]<<std::endl;
+        //     std::cout<<"error_: " << error_.transpose()<<std::endl;
+        // std::cout<<"a0: " << a0.transpose()<<std::endl;
+        // std::cout<<"a1: " << a1.transpose()<<std::endl;
+        // std::cout<<"a2: " << a2.transpose()<<std::endl;
+        // std::cout<<"b0: " << b0.transpose()<<std::endl;
+        // std::cout<<"b1: " << b1.transpose()<<std::endl;
+        // std::cout<<"b2: " << b2.transpose()<<std::endl;
+       
+    }
+    
+}                                
+                                 
 
 
 bool Controller::setPidsCallback(set_pids::Request& req,
@@ -308,37 +371,66 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     //(NB this is not the convention of ros but the convention that we define in ros_impedance_controller_XX.yaml!!!!
     //std::cout << "-----------------------------------" << std::endl;
     
+
+    
     EffortPid msg;
     msg.name.resize(joint_states_.size());
     msg.effort_pid.resize(joint_states_.size());
-    for (unsigned int i = 0; i < joint_states_.size(); i++)
-    {      
-    
-        measured_joint_position_(i) = joint_states_[i].getPosition();
-	measured_joint_velocity_(i) = joint_states_[i].getVelocity();
-        double joint_pos_error = des_joint_positions_(i) - measured_joint_position_(i);
-        double integral_action = integral_action_old_[i] + joint_i_gain_[i]*joint_pos_error*period.toSec();
-        //std::cout << "***** joint: "<< joint_names_[i] << std::endl;
-        //std::cout << "joint des:   "<< des_joint_positions_(i) << std::endl;
-        //std::cout << "joint pos:   "<< joint_states_[i].getPosition() << std::endl;
-        //std::cout << "wrap:        "<< measured_joint_position_(i) << std::endl;
-       
-        //std::cout << "effort pid des:  "<< des_joint_efforts_pids_(i) << std::endl;
-        //std::cout << "effort meas: "<< joint_states_[i].getEffort() << std::endl;
-    
-        //compute PID
-        des_joint_efforts_pids_(i) = joint_p_gain_[i]*(des_joint_positions_(i) -  measured_joint_position_(i) ) +
-                                     joint_d_gain_[i]*(des_joint_velocities_(i) - measured_joint_velocity_(i) ) +
-                                     integral_action;
 
-        integral_action_old_[i] = integral_action;
+    if (discrete_implementation)
+    {
+        //https://www.scilab.org/discrete-time-pid-controller-implementation
+        updateDiscreteGains(joint_p_gain_, joint_d_gain_, joint_i_gain_, period.toSec());
+        for (unsigned int i = 0; i < joint_states_.size(); i++)
+        {
+           //discrete implementation
+            error2_[i]= error1_[i]; 
+            error1_[i]= error_[i]; 
+            out2_[i] = out1_[i];  
+            out1_[i] = des_joint_efforts_pids_(i); // update variables
+            //compute control action
+            error_[i] = des_joint_positions_(i) - joint_states_[i].getPosition();
+            des_joint_efforts_pids_(i) = -a1[i]/a0[i]*out1_[i] -a2[i]/a0[i]*out2_[i] + b0[i]/a0[i]*error_[i] + b1[i]/a0[i]*error1_[i] + b2[i]/a0[i]*error2_[i];
+            msg.name[i] = joint_names_[i];
+            msg.effort_pid[i]=des_joint_efforts_pids_(i);
+            //add PID + FFWD
+            joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
+        }
 
-        msg.name[i] = joint_names_[i];
-        msg.effort_pid[i]=des_joint_efforts_pids_(i);
-        //add PID + FFWD
-        joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
+
+    } else{
+        for (unsigned int i = 0; i < joint_states_.size(); i++)
+        {      
         
+            
+            measured_joint_position_(i) = joint_states_[i].getPosition();
+            measured_joint_velocity_(i) = joint_states_[i].getVelocity();
+            double joint_pos_error = des_joint_positions_(i) - measured_joint_position_(i);
+            double integral_action = integral_action_old_[i] + joint_i_gain_[i]*joint_pos_error*period.toSec();
+            //std::cout << "***** joint: "<< joint_names_[i] << std::endl;
+            //std::cout << "joint des:   "<< des_joint_positions_(i) << std::endl;
+            //std::cout << "joint pos:   "<< joint_states_[i].getPosition() << std::endl;
+            //std::cout << "wrap:        "<< measured_joint_position_(i) << std::endl;
+        
+            //std::cout << "effort pid des:  "<< des_joint_efforts_pids_(i) << std::endl;
+            //std::cout << "effort meas: "<< joint_states_[i].getEffort() << std::endl;
+        
+            //compute PID
+            des_joint_efforts_pids_(i) = joint_p_gain_[i]*(des_joint_positions_(i) -  measured_joint_position_(i) ) +
+                                        joint_d_gain_[i]*(des_joint_velocities_(i) - measured_joint_velocity_(i) ) +
+                                        integral_action;
+
+            integral_action_old_[i] = integral_action;
+
+             msg.name[i] = joint_names_[i];
+            msg.effort_pid[i]=des_joint_efforts_pids_(i);
+            //add PID + FFWD
+            joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
+            
+        }
     }
+
+
 
     effort_pid_pub.publish(msg);
 }

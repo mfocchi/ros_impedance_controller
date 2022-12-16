@@ -75,6 +75,7 @@ private:
     void commandCallback(const sensor_msgs::JointState &msg);
     bool setPidsCallback(set_pids::Request& req,
                          set_pids::Response& res);
+    void updateDiscreteGains(const std::vector<double> & joint_p_gain_, const std::vector<double> & joint_d_gain_,  const std::vector<double> & joint_i_gain_, const double & Ts);
     //no longer used
     void baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg);
     
@@ -114,10 +115,19 @@ private:
     std::vector<std::string> joint_type_;
     Eigen::VectorXd measured_joint_position_;
     Eigen::VectorXd measured_joint_velocity_;
-    
+
     /** @brief Desired joint efforts computed by the PIDs */
     Eigen::VectorXd des_joint_efforts_pids_;
     
+
+    /** @brief Discrete implem varables */
+    Eigen::VectorXd error_;
+    Eigen::VectorXd error1_;
+    Eigen::VectorXd error2_;
+    Eigen::VectorXd out1_;
+    Eigen::VectorXd out2_;
+    Eigen::VectorXd a0, a1, a2, b0, b1, b2;
+
     // no longer used
     //tf::Quaternion q_base;
     //tf::Vector3 base_pos_w;
@@ -129,6 +139,7 @@ private:
 
     ros::NodeHandle * root_nh_;
     bool verbose = false;
+    bool discrete_implementation = false;
 
 };
 
