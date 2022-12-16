@@ -6,6 +6,7 @@
         <arg name="rviz_conf" default="$(find ros_impedance_controller)/config/operator.rviz"/>
         <arg name="world_name" default="solo.world"/>
         <arg name="real_robot" default="false" />
+        <arg name="go0_conf" default="home"/>
 
 	<!-- if task_period is smaller than sim max_step_size (in world file) it is clamped to that value!!!!!!-->
 	<arg name="task_period" default="0.001" />
@@ -28,6 +29,10 @@
 	<param name="robot_semantic_description" command="$(find xacro)/xacro --inorder '$(arg find_robot_description)/robots/$(arg robot_name).srdf.xacro'" />
 
 
+	<!-- 3 Loading  controllers configurations from YAML file to parameter server -->
+    <rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/>
+	<rosparam file="$(arg find_robot_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
+
 	<group unless="$(arg real_robot)">	
 
 	         <!-- 2 launch gzserver / gzcclient -->
@@ -45,8 +50,8 @@
         	<node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name) -x $(arg spawn_x) -y $(arg spawn_y) -z $(arg spawn_z)"/>
 
 		<!-- Get robot to 0 position -->
-        	<node name="goto0" pkg="$(arg robot_name)_description" type="go0" args="1.0" output="screen" />
-    	</group>
+		<node name="goto0" pkg="$(arg robot_name)_description" type="go0" args="1.0 $(arg go0_conf)" output="screen" />
+		</group>
 
 	<group if="$(arg real_robot)">	
 	    <!-- 2 Spawn the hardware interface -->
@@ -54,9 +59,7 @@
         </group>
   	
 
-	<!-- 3 Loading  controllers configurations from YAML file to parameter server -->
-        <rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/>
-	<rosparam file="$(arg find_robot_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name)" command="load"/>
+	
 
         <!-- 4 Loading the controllers into the controller manager -->
         <node name="ros_impedance_controller" pkg="controller_manager" type="spawner" respawn="false"
