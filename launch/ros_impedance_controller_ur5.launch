@@ -85,7 +85,7 @@
 		 	<rosparam file="$(find ur_description)/config/ros_impedance_controller_soft_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
 		</group>
 		
-		<group unless="$(arg gripper)">	
+		<group unless="$(arg soft_gripper)">	
 		 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
          		<rosparam file="$(find ur_description)/config/ros_impedance_controller_gripper.yaml" ns="/$(arg robot_name)" command="load"/>
          	 </group>			
