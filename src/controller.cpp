@@ -32,7 +32,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
                       ros::NodeHandle& controller_nh)
 {
     // getting the names of the joints from the ROS parameter server
-    std::cout<< red<< "Initialize Ros Impedance Controller framework independent" << reset <<std::endl;
+    std::cout<< cyan<< "ROS_IMPEDANCE CONTROLLER: Initialize Ros Impedance Controller" << reset <<std::endl;
     root_nh_ = &root_nh;
     assert(robot_hw);
 
@@ -198,7 +198,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     ros::NodeHandle param_node;
     param_node.getParam("/robot_name", robot_name);
 
-    std::cout<< red<< "ROBOT NAME IS : "<< robot_name<<reset <<std::endl;
+    std::cout<< cyan<< "ROS_IMPEDANCE CONTROLLER: ROBOT NAME IS : "<< robot_name<<reset <<std::endl;
      // Create the PID set service
     set_pids_srv_ = param_node.advertiseService("/set_pids", &Controller::setPidsCallback, this);
 
