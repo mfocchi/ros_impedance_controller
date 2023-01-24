@@ -14,8 +14,11 @@
 
  	<param name="anchorZ" type="str" value="$(arg spawn_z)" />
 
-	<arg name="mountain_pos_x" value="$(eval  arg('spawn_x') - 0.05)"/>
-
+	<!-- old way: place mountain wrt to anchor-->
+	<!--arg name="mountain_pos_x" value="$(eval  arg('spawn_x') - 0.05)"/-->
+	
+	<!-- new way: place mountain wrt to world (thickness)-->
+	<arg name="mountain_pos_x" value="-0.05"/>
         <!-- load robot name into param server-->
         <param name="robot_name" type="str" value="$(arg robot_name)" />
 
@@ -41,9 +44,9 @@
 
 
         <!-- 3 Spawn a robot (described in robot_description) into Gazebo -->
-        <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name) -x $(arg spawn_x) -y $(arg spawn_y)"/>
+        <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name)"/>
 	
-        <node name="spawn_gazebo_model2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param climb_wall -model climb_wall -x $(arg mountain_pos_x)  -y $(arg spawn_y)"/>
+        <node name="spawn_gazebo_model2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param climb_wall -model climb_wall -x $(arg mountain_pos_x)"/>
 	
 
 	<!-- 4 -Loading  controllers settings -->
