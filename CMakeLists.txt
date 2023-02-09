@@ -29,6 +29,7 @@ add_service_files(
   set_pids.srv
   get_map.srv
   get_effort_pid.srv
+  generic_float.srv
 )
 
 generate_messages(DEPENDENCIES geometry_msgs)
