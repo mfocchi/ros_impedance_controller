@@ -7,6 +7,7 @@
         <arg name="world_name" default="solo.world"/>
         <arg name="real_robot" default="false" />
         <arg name="go0_conf" default="home"/>
+        <arg name="load_force_sensors" default="false"/>
 
 	<!-- if task_period is smaller than sim max_step_size (in world file) it is clamped to that value!!!!!!-->
 	<arg name="task_period" default="0.001" />
@@ -24,7 +25,7 @@
 	<!-- 1 - load the robot URDF /SRDF into param server (this will have to contain ros_control plugin and transmissions) -->
 	<!-- to set the task_period  you need to regenerate the urdf from hyq description by changing <updateRate> of plugin libgazebo_ros_p3d.so-->       
 	<arg name="find_robot_description" value="$(eval find(robot_name+'_description'))"/>
-	<param name="robot_description" command="$(find xacro)/xacro --inorder '$(arg find_robot_description)/robots/$(arg robot_name).urdf.xacro' new_gazebo_version:=$(arg new_gazebo_version)  task_period:=$(arg task_period)"/>      
+	<param name="robot_description" command="$(find xacro)/xacro --inorder '$(arg find_robot_description)/robots/$(arg robot_name).urdf.xacro' new_gazebo_version:=$(arg new_gazebo_version)  task_period:=$(arg task_period) load_force_sensors:=(arg load_force_sensors)"/>      
 	<!-- send robot semantic description srdf to param server -->
 	<param name="robot_semantic_description" command="$(find xacro)/xacro --inorder '$(arg find_robot_description)/robots/$(arg robot_name).srdf.xacro'" />
 
