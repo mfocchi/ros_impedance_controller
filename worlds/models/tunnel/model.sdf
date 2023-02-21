@@ -4,12 +4,15 @@
 <model name="tunnel">
         <static>true</static>
 	<link name="link">
-	<pose>0.0 0.1 0.0 0 0 0</pose>
+	
+	<!-- location of the tunnel inside the world -->
+	<pose>0. -1. 0.0 0 0 0</pose>
 		<collision name="collision">
 			<geometry>
 		    	    <mesh>
+		    	        <!-- scaling for better fit the robot model -->
 				<uri>model://tunnel/mesh/gasdotto.stl</uri>
-				<scale>1 1 1</scale>
+				<scale>1. 1. 1.</scale>
 			    </mesh>	   
 			</geometry>
 		</collision>
@@ -18,7 +21,7 @@
 			<geometry>
 			    <mesh>
 				<uri>model://tunnel/mesh/gasdotto.stl</uri>
-				<scale>1 1 1</scale>
+				<scale>1. 1. 1. </scale>
 			    </mesh>
 			</geometry>
 		</visual>
