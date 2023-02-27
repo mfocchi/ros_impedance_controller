@@ -6,7 +6,7 @@
 	<link name="link">
 	
 	<!-- location of the tunnel inside the world -->
-	<pose>0. -1. 0.0 0 0 0</pose>
+	<pose>0. 1. 0. 0.2618 0. 0.</pose>
 		<collision name="collision">
 			<geometry>
 		    	    <mesh>
