@@ -16,11 +16,13 @@
 	<arg name="spawn_x" default="0.0" />
 	<arg name="spawn_y" default="0.0" />
 	<arg name="spawn_z" default="0.3" />
-		
-        <!-- load robot name into param server for urdf generation-->
-        <param name="robot_name" type="str" value="$(arg robot_name)" />
-	<param name="task_period"  value="$(arg task_period)" />
 
+	<arg name="pid_discrete_implementation" default="false" />
+		
+    <!-- load robot name into param server for urdf generation-->
+    <param name="robot_name" type="str" value="$(arg robot_name)" />
+	<param name="task_period"  value="$(arg task_period)" />
+    <param name="pid_discrete_implementation"  value="$(arg pid_discrete_implementation)" />
 
 	<!-- 1 - load the robot URDF /SRDF into param server (this will have to contain ros_control plugin and transmissions) -->
 	<!-- to set the task_period  you need to regenerate the urdf from hyq description by changing <updateRate> of plugin libgazebo_ros_p3d.so-->       

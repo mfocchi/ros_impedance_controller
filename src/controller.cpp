@@ -24,7 +24,6 @@ Controller::Controller()
 
 Controller::~Controller()
 {
-
 }
    
 bool Controller::init(hardware_interface::RobotHW* robot_hw,
@@ -63,7 +62,7 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
         return false;
     } else
     {
-         std::cout<< green<< "Found  " <<joint_names_.size()<< " joints"<< reset <<std::endl;
+         std::cout<< green<< "Found " <<joint_names_.size()<< " joints"<< reset <<std::endl;
     }
 
      // Setting up handles:
@@ -85,11 +84,19 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     }
     assert(joint_states_.size()>0);
 
-
-   if (controller_nh.getParam("discrete_implementation", discrete_implementation))
-   {
-       std::cout<< green<< "Discrete implementation of PID control! (low the gains)"<< reset <<std::endl; 
-   }
+    //subscriber to the ground truth
+    std::string robot_name;
+    ros::NodeHandle param_node;
+    param_node.getParam("/robot_name", robot_name);
+    param_node.getParam("/pid_discrete_implementation", discrete_implementation_);
+    if (discrete_implementation_)
+    {
+        std::cout<< green<< "Discrete implementation of PID control! (low the gains)"<< reset <<std::endl; 
+    }
+    else
+    {
+        std::cout<< green<< "Continuous implementation of PID control!"<< reset <<std::endl; 
+    }
 
 
     // Resize the variables
@@ -108,31 +115,30 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
     measured_joint_velocity_.resize(joint_states_.size());
     measured_joint_velocity_.fill(0.0);
 
+    joint_positions_old_.resize(joint_states_.size());
+    joint_positions_old_.resize(joint_states_.size());
+
     // discrete implementation 
     error_.resize(joint_states_.size());
     error_.fill(0.0);
     error1_.resize(joint_states_.size());
     error1_.fill(0.0);    
-    error2_.resize(joint_states_.size());
-    error2_.fill(0.0);
-    out1_.resize(joint_states_.size());
-    out1_.fill(0.0);    
-    out2_.resize(joint_states_.size());
-    out2_.fill(0.0);
-    
-    a0.resize(joint_states_.size());
-    a0.fill(0.0);
-    a1.resize(joint_states_.size());
-    a1.fill(0.0);    
-    a2.resize(joint_states_.size());
-    a2.fill(0.0);
-    b0.resize(joint_states_.size());
-    b0.fill(0.0);    
-    b1.resize(joint_states_.size());
-    b1.fill(0.0);
-    b2.resize(joint_states_.size());
-    b2.fill(0.0);
 
+    T_i.resize(joint_states_.size());
+    T_i.fill(0.0);
+    T_d.resize(joint_states_.size());
+    T_d.fill(0.0);    
+
+    proportional_action_.resize(joint_states_.size());
+    proportional_action_.fill(0.0); 
+    integral_action_.resize(joint_states_.size());
+    integral_action_.fill(0.0); 
+    derivative_action_.resize(joint_states_.size());
+    derivative_action_.fill(0.0); 
+
+    use_integral_action_.resize(joint_states_.size());
+    use_integral_action_.fill(false); 
+    
 
     joint_type_.resize(joint_states_.size());
     std::fill(joint_type_.begin(), joint_type_.end(), "revolute");
@@ -164,7 +170,6 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
            ROS_ERROR("PID gains must be positive!");
            return false;
        }
-       joint_i_gain_old_ =  joint_i_gain_;
        ROS_DEBUG("P value for joint %i is: %f",i,joint_p_gain_[i]);
        ROS_DEBUG("I value for joint %i is: %f",i,joint_i_gain_[i]);
        ROS_DEBUG("D value for joint %i is: %f",i,joint_d_gain_[i]);
@@ -173,37 +178,39 @@ bool Controller::init(hardware_interface::RobotHW* robot_hw,
 
        //get statrup go0 position from yaml (TODO srdf)
        controller_nh.getParam("home/" + joint_names_[i], des_joint_positions_[i]);
+     
+        if (joint_i_gain_[i] == 0)
+        {
+            use_integral_action_[i] = false;
+            T_i[i] = 0;
+        }
+        else
+        {
+            use_integral_action_[i] = true;
+            T_i[i] = joint_p_gain_[i] / joint_i_gain_[i];
+        }
 
 
+        if (joint_p_gain_[i] == 0)
+        {
+            T_d[i] = 0;
+        }
+        else
+        {
+            T_d[i] = joint_d_gain_[i] / joint_p_gain_[i];
+        }
     }
-
-
-//TODO
-//    srdf::Model s;
-//    urdf::ModelInterfaceSharedPtr u = urdf::parseURDF(urdf);
-//    s.initString(*u,srdf);
-//    auto group_states = s.getGroupStates();
-
-//    for(unsigned int i=0;i<group_states.size();i++)
-//        if(group_states[i].name_ == "home") // look for the home group state and get the names of the joints in there
-//            for(auto & tmp : group_states[i].joint_values_)
-//                des_joint_positions_.push_back(tmp.second);
 
 
     // Create the subscriber
     command_sub_ = root_nh.subscribe("/command", 1, &Controller::commandCallback, this, ros::TransportHints().tcpNoDelay());
 
-    //subscriber to the ground truth
-    std::string robot_name = "hyq";
-    ros::NodeHandle param_node;
-    param_node.getParam("/robot_name", robot_name);
+  
+
 
     std::cout<< cyan<< "ROS_IMPEDANCE CONTROLLER: ROBOT NAME IS : "<< robot_name<<reset <<std::endl;
      // Create the PID set service
     set_pids_srv_ = param_node.advertiseService("/set_pids", &Controller::setPidsCallback, this);
-
-    // no longer used we publish TF in base controller	
-    //gt_sub_ = param_node.subscribe("/"+robot_name + "/ground_truth", 1, &Controller::baseGroundTruthCB, this, ros::TransportHints().tcpNoDelay());
 
     effort_pid_pub = root_nh.advertise<EffortPid>("effort_pid", 1);
     return true;
@@ -215,36 +222,7 @@ void Controller::starting(const ros::Time& time)
     ROS_DEBUG("Starting Controller");
 
 }
-
-void Controller::updateDiscreteGains(const std::vector<double> & joint_p_gain_, const std::vector<double> & joint_d_gain_,  const std::vector<double> & joint_i_gain_, const double & Ts)
-{
-    double N = 1000.;
-    for (unsigned int i = 0; i < joint_states_.size(); i++)
-    { 
-        a0[i] = (1+N*Ts);
-        a1[i] = -(2 + N*Ts);
-        a2[i] = 1;
-        b0[i] = joint_p_gain_[i]*(1+N*Ts) + joint_i_gain_[i]*Ts*(1+N*Ts) + joint_d_gain_[i]*N;
-
-
-        b1[i] = -(joint_p_gain_[i]*(2+N*Ts) + joint_i_gain_[i]*Ts + 2*joint_d_gain_[i]*N);
-        b2[i] = joint_p_gain_[i] + joint_d_gain_[i]*N;
-
-              
-        // std::cout<<"joint_p_gain_: " <<i << "  " << joint_p_gain_[i]<<std::endl;
-        // std::cout<<"joint_d_gain_: " <<i << "  " << joint_d_gain_[i]<<std::endl;
-        //     std::cout<<"joint_i_gain_: " <<i << "  " << joint_i_gain_[i]<<std::endl;
-        //     std::cout<<"error_: " << error_.transpose()<<std::endl;
-        // std::cout<<"a0: " << a0.transpose()<<std::endl;
-        // std::cout<<"a1: " << a1.transpose()<<std::endl;
-        // std::cout<<"a2: " << a2.transpose()<<std::endl;
-        // std::cout<<"b0: " << b0.transpose()<<std::endl;
-        // std::cout<<"b1: " << b1.transpose()<<std::endl;
-        // std::cout<<"b2: " << b2.transpose()<<std::endl;
-       
-    }
-    
-}                                
+                           
                                  
 
 
@@ -275,11 +253,6 @@ bool Controller::setPidsCallback(set_pids::Request& req,
                 if(req.data[i].i_value>=0.0)
                 {
                     joint_i_gain_[j] = req.data[i].i_value;
-                    if (joint_i_gain_[j] != joint_i_gain_old_[j])
-                    {
-                        //reset integral any time there is a change in the integral gain
-                        integral_action_old_[j] = 0.0;
-                    }
                     if (verbose)
                        std::cout<<"Set I gain for joint "<< joint_names_[j] << " to: "<<joint_i_gain_[j]<<std::endl;
                 }
@@ -300,7 +273,30 @@ bool Controller::setPidsCallback(set_pids::Request& req,
                    ROS_WARN("D value has to be positive");
                    res.ack = false;
                 }
-            }
+
+                if (joint_i_gain_[i] == 0)
+                {
+                    use_integral_action_[j] = false;
+                    T_i[j] = 0;
+                }
+                else
+                {
+                    use_integral_action_[j] = true;
+                    T_i[j] = joint_p_gain_[j] / joint_i_gain_[j];
+                }
+
+                if (joint_p_gain_[i] == 0)
+                {
+                    T_d[i] = 0;
+                }
+                else
+                {
+                    T_d[i] = joint_d_gain_[i] / joint_p_gain_[i];
+                }
+                
+
+                }
+
 
     }
 
@@ -359,6 +355,7 @@ void Controller::baseGroundTruthCB(const nav_msgs::OdometryConstPtr &msg)
 }
 
 
+
 void Controller::update(const ros::Time& time, const ros::Duration& period)
 {
 
@@ -377,24 +374,33 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
     msg.name.resize(joint_states_.size());
     msg.effort_pid.resize(joint_states_.size());
 
-    if (discrete_implementation)
+    if (discrete_implementation_)
     {
-        //https://www.scilab.org/discrete-time-pid-controller-implementation
-        updateDiscreteGains(joint_p_gain_, joint_d_gain_, joint_i_gain_, period.toSec());
+        Ts = period.toSec();
+        // check: http://www.diag.uniroma1.it/deluca/automation/Automazione_RegolazionePID.pdf
         for (unsigned int i = 0; i < joint_states_.size(); i++)
         {
-           //discrete implementation
-            error2_[i]= error1_[i]; 
-            error1_[i]= error_[i]; 
-            out2_[i] = out1_[i];  
-            out1_[i] = des_joint_efforts_pids_(i); // update variables
-            //compute control action
+            //discrete implementation
+            error1_[i] = error_[i];
             error_[i] = des_joint_positions_(i) - joint_states_[i].getPosition();
-            des_joint_efforts_pids_(i) = -a1[i]/a0[i]*out1_[i] -a2[i]/a0[i]*out2_[i] + b0[i]/a0[i]*error_[i] + b1[i]/a0[i]*error1_[i] + b2[i]/a0[i]*error2_[i];
+            
+
+            proportional_action_[i] = joint_p_gain_[i] * error_[i];
+            if (use_integral_action_[i])
+            {
+                integral_action_[i] = integral_action_[i] + (joint_p_gain_[i] * Ts / T_i[i]) * error_[i];
+            }
+            derivative_action_[i] = 1/(1+T_d[i]/(N*Ts)) * (T_d[i]/(N*Ts)*derivative_action_[i] + joint_p_gain_[i]*T_d[i]/Ts * (error_[i]-error1_[i]));
+            
+
+            des_joint_efforts_pids_(i) = proportional_action_[i] + integral_action_[i] + derivative_action_[i];
+            
             msg.name[i] = joint_names_[i];
             msg.effort_pid[i]=des_joint_efforts_pids_(i);
             //add PID + FFWD
             joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
+
+            joint_positions_old_[i] = joint_states_[i].getPosition();
         }
 
 
@@ -402,7 +408,6 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
         for (unsigned int i = 0; i < joint_states_.size(); i++)
         {      
         
-            
             measured_joint_position_(i) = joint_states_[i].getPosition();
             measured_joint_velocity_(i) = joint_states_[i].getVelocity();
             double joint_pos_error = des_joint_positions_(i) - measured_joint_position_(i);
@@ -422,7 +427,7 @@ void Controller::update(const ros::Time& time, const ros::Duration& period)
 
             integral_action_old_[i] = integral_action;
 
-             msg.name[i] = joint_names_[i];
+            msg.name[i] = joint_names_[i];
             msg.effort_pid[i]=des_joint_efforts_pids_(i);
             //add PID + FFWD
             joint_states_[i].setCommand(des_joint_efforts_(i) +  des_joint_efforts_pids_(i));
