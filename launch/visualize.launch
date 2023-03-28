@@ -2,7 +2,7 @@
 <launch>
      
      <arg name="rviz_conf" default="$(env LOCOSIM_DIR)/robot_control/rviz/config.rviz"/>
-     <arg name="robot_name" default="simple_geometry"/>
+     <arg name="robot_name" default="ur4"/>
      <arg name="test_joints" default="true"/>
 
      <!-- send the robot XML to param server -->
@@ -23,10 +23,5 @@
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
  
   
-      
-    <!-- with ur4 it crashes -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="world_broadcaster" args="0 0 0 0 0 0 1  base_link world"/>
-
-
 
 </launch>
