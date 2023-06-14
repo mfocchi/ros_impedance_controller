@@ -5,7 +5,7 @@
         <arg name="gui" default="true" />
         <arg name="rviz_conf" default="$(find climbingrobot_description)/rviz/conf.rviz"/>
 	<arg name="task_period" default="0.001" />
-	<arg name="world_name" default="accurate.world"/>
+	<arg name="world_name" default="climbingrobot2.world"/>
 
 	<arg name="spawn_x" default="0.0" />
 	<arg name="spawn_y" default="0.0" />
