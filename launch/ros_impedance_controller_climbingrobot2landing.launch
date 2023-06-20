@@ -13,6 +13,7 @@
 	<arg name="spawn_2x" default="0.0" />
 	<arg name="spawn_2y" default="0.0" />
 	<arg name="spawn_2z" default="2.0" />
+	<arg name="wall_inclination" default="0.0" />
 
 	<param name="anchorX" type="str" value="$(arg spawn_x)" />
 	<param name="anchorY" type="str" value="$(arg spawn_y)" />
@@ -21,6 +22,7 @@
 	<param name="anchor2X" type="str" value="$(arg spawn_2x)" />
 	<param name="anchor2Y" type="str" value="$(arg spawn_2y)" />
  	<param name="anchor2Z" type="str" value="$(arg spawn_2z)" />
+
 	
 	<!-- old way: place mountain wrt to anchor-->
 	<!--arg name="mountain_pos_x" value="$(eval  arg('spawn_x') - 0.05)"/-->
@@ -37,7 +39,7 @@
 		task_period:=$(arg task_period)  anchorX:=$(arg spawn_x)  anchorY:=$(arg spawn_y) anchorZ:=$(arg spawn_z)  anchor2X:=$(arg spawn_2x)  anchor2Y:=$(arg spawn_2y)  anchor2Z:=$(arg spawn_2z)"/>
         
 	<!--  load climb wall into param server-->	
-	<param name="climb_wall" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climb_wall.xacro'  anchorZ:=$(arg spawn_z) obstacle:=false"/>
+	<param name="climb_wall" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climb_wall.xacro'  anchorZ:=$(arg spawn_z) wall_inclination:=$(arg wall_inclination) obstacle:=false"/>
      
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >
