@@ -14,6 +14,8 @@
 	<arg name="spawn_2y" default="0.0" />
 	<arg name="spawn_2z" default="2.0" />
 
+	<arg name="obstacle" default="false" />
+
 	<param name="anchorX" type="str" value="$(arg spawn_x)" />
 	<param name="anchorY" type="str" value="$(arg spawn_y)" />
  	<param name="anchorZ" type="str" value="$(arg spawn_z)" />
@@ -38,7 +40,7 @@
         <param name="robot_semantic_description" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climbingrobot2.srdf'" />
 
 	<!--  load climb wall into param server-->	
-	<param name="climb_wall" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climb_wall.xacro'  anchorZ:=$(arg spawn_z) obstacle:=false"/>
+	<param name="climb_wall" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climb_wall2.xacro'  anchorZ:=$(arg spawn_z)  obstacle:=$(arg obstacle)"/>
      
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >

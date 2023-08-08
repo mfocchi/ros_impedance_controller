@@ -29,7 +29,7 @@
         <param name="robot_semantic_description" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climbingrobot.srdf'" />
 
 	<!--  load climb wall into param server-->	
-	<param name="climb_wall" command="$(find xacro)/xacro --inorder '$(find climbingrobot_description)/urdf/climb_wall.xacro'  anchorZ:=$(arg spawn_z)"/>
+	<param name="climb_wall" command="$(find xacro)/xacro --inorder '$(find climbingrobot_description)/urdf/climb_wall.xacro'  anchorZ:=$(arg spawn_z)  obstacle:=true"/>
      
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >
