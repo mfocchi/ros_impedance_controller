@@ -33,60 +33,7 @@
           <arg name="kinematics_params" default="$(find ur_description)/config/ur5e/default_kinematics.yaml"/>
           <arg name="physical_params" default="$(find ur_description)/config/ur5e/physical_parameters.yaml"/>
           <arg name="visual_params" default="$(find ur_description)/config/ur5e/visual_parameters.yaml"/>
-      
-	<group if="$(arg use_torque_control)">
-	  <include file="$(find ur_description)/launch/upload.launch">
-		    <arg name="gazebo" value="$(arg gazebo)" />
-		    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
-		    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
-		    <arg name="physical_params" value="$(arg physical_params)"/>
-		    <arg name="visual_params" value="$(arg visual_params)"/>
-	     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
-            	    <arg name="gripper" value="$(arg gripper)"/>
-            	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
-		    <arg name="robot_name_space" value="$(arg robot_name1)"/>
-		</include>
-
-	       <include file="$(find ur_description)/launch/upload.launch">
-		    <arg name="gazebo" value="$(arg gazebo)" />
-		    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
-		    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
-		    <arg name="physical_params" value="$(arg physical_params)"/>
-		    <arg name="visual_params" value="$(arg visual_params)"/>
-	     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
-            	    <arg name="gripper" value="$(arg gripper)"/>
-            	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
-		    <arg name="robot_name_space" value="$(arg robot_name2)"/>
-		</include>
-
-        </group>
-        
-  	<group unless="$(arg use_torque_control)">
-         <include file="$(find ur_description)/launch/upload.launch">
-            <arg name="gazebo" value="$(arg gazebo)" />
-            <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
-            <arg name="kinematics_params" value="$(arg kinematics_params)"/>
-            <arg name="physical_params" value="$(arg physical_params)"/>
-            <arg name="visual_params" value="$(arg visual_params)"/>
-     	    <arg name="transmission_hw_interface" value="hardware_interface/PositionJointInterface"/>
-            <arg name="gripper" value="$(arg gripper)"/>
-            <arg name="soft_gripper" value="$(arg soft_gripper)"/>
-	    <arg name="robot_name_space" value="$(arg robot_name1)"/>
-          </include>
-
-          <include file="$(find ur_description)/launch/upload.launch">
-		    <arg name="gazebo" value="$(arg gazebo)" />
-		    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
-		    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
-		    <arg name="physical_params" value="$(arg physical_params)"/>
-		    <arg name="visual_params" value="$(arg visual_params)"/>
-	     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
-            	    <arg name="gripper" value="$(arg gripper)"/>
-            	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
-		    <arg name="robot_name_space" value="$(arg robot_name2)"/>
-		</include>
-
-        </group>
+  
 
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >
@@ -100,54 +47,139 @@
                 <arg name="verbose" value="true" />
         </include>
 
-        <!-- 3 Spawn a robot (described in robot_description) into Gazebo -->
-        <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param $(arg robot_name1)/robot_description -model ur5 -x $(arg spawn_x) -y  -2 -z $(arg spawn_z)"/>
 
-        <!-- 3 Spawn a robot (described in robot_description) into Gazebo -->
-        <node name="spawn_gazebo_model2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param $(arg robot_name2)/robot_description -model ur5_2 -x $(arg spawn_x) -y 2 -z $(arg spawn_z)"/>
+  	<group ns="$(arg robot_name1)">
 
 
+    
+		<group if="$(arg use_torque_control)">
+		  <include file="$(find ur_description)/launch/upload.launch">
+			    <arg name="gazebo" value="$(arg gazebo)" />
+			    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
+			    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
+			    <arg name="physical_params" value="$(arg physical_params)"/>
+			    <arg name="visual_params" value="$(arg visual_params)"/>
+		     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
+		    	    <arg name="gripper" value="$(arg gripper)"/>
+		    	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
+		
+			</include>
 
+		      
+		</group>
+		
+	  	<group unless="$(arg use_torque_control)">
+			 <include file="$(find ur_description)/launch/upload.launch">
+			    <arg name="gazebo" value="$(arg gazebo)" />
+			    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
+			    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
+			    <arg name="physical_params" value="$(arg physical_params)"/>
+			    <arg name="visual_params" value="$(arg visual_params)"/>
+		     	    <arg name="transmission_hw_interface" value="hardware_interface/PositionJointInterface"/>
+			    <arg name="gripper" value="$(arg gripper)"/>
+			    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
+			
+			  </include>     
+
+		</group>
+
+
+		<param name="tf_prefix" value="$(arg robot_name1)" />
+
+		<!-- 3 Spawn a robot (described in robot_description) into Gazebo -->
+		<node name="spawn_gazebo_model_$(arg robot_name1)" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name1) -x $(arg spawn_x) -y  -2 -z $(arg spawn_z)"/>
+		
+		<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml"  command="load"/> 	
+
+
+	 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml"  command="load"/>
+
+
+	 	<rosparam file="$(find ur_description)/config/ros_impedance_controller.yaml" command="load"/>
+
+
+
+		<node name="controller_manager" pkg="controller_manager" type="spawner" respawn="true" ns="/$(arg robot_name1)" 
+			output="screen"  args=" --namespace=/$(arg robot_name1)  joint_state_publisher $(arg position_controllers) --shutdown-timeout 1" />
+
+
+		 <node pkg="robot_state_publisher" type="robot_state_publisher" 
+			  name="robot_state_publisher" output="screen"/>
+
+		<node name="goto0" pkg="ur_description" type="go0" args="1.0" output="screen"/>
+	</group>
+
+
+ `	<group ns="$(arg robot_name2)">
+
+
+    
+		<group if="$(arg use_torque_control)">
+		  <include file="$(find ur_description)/launch/upload.launch">
+			    <arg name="gazebo" value="$(arg gazebo)" />
+			    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
+			    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
+			    <arg name="physical_params" value="$(arg physical_params)"/>
+			    <arg name="visual_params" value="$(arg visual_params)"/>
+		     	    <arg name="transmission_hw_interface" value="hardware_interface/EffortJointInterface"/>
+		    	    <arg name="gripper" value="$(arg gripper)"/>
+		    	    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
+	
+			</include>
+
+		      
+		</group>
+		
+	  	<group unless="$(arg use_torque_control)">
+			 <include file="$(find ur_description)/launch/upload.launch">
+			    <arg name="gazebo" value="$(arg gazebo)" />
+			    <arg name="joint_limit_params" value="$(arg joint_limit_params)"/>
+			    <arg name="kinematics_params" value="$(arg kinematics_params)"/>
+			    <arg name="physical_params" value="$(arg physical_params)"/>
+			    <arg name="visual_params" value="$(arg visual_params)"/>
+		     	    <arg name="transmission_hw_interface" value="hardware_interface/PositionJointInterface"/>
+			    <arg name="gripper" value="$(arg gripper)"/>
+			    <arg name="soft_gripper" value="$(arg soft_gripper)"/>
+		
+			  </include>     
+
+		</group>
+
+ 		<param name="tf_prefix" value="$(arg robot_name2)" />
+
+		<!-- 3 Spawn a robot (described in robot_description) into Gazebo -->
+		<node name="spawn_gazebo_model_$(arg robot_name2)" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model $(arg robot_name2) -x $(arg spawn_x) -y 2 -z $(arg spawn_z)"/>
+
+		<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml"  command="load"/> 	
+
+	 	<rosparam file="$(find ur_description)/config/ros_impedance_controller.yaml"  command="load"/>
+
+
+ 		<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml"  command="load"/>
+
+		<node name="controller_manager" pkg="controller_manager" type="spawner" respawn="true" output="screen"  ns="/$(arg robot_name2)"    args="--namespace=/$(arg robot_name2) joint_state_publisher $(arg position_controllers) --shutdown-timeout 1 " />
+
+
+
+		 <node pkg="robot_state_publisher" type="robot_state_publisher"   name="robot_state_publisher" output="screen"/>
+		<node name="goto0" pkg="ur_description" type="go0" args="1.0" output="screen"/>
+	</group>
 
 	<!-- 4 -Loading  controllers settings -->
 	
 	<!-- TODO1 understand how to set PD gains in jointpos controller : rosparam file="$(find ur_description)/config/ur5e/sim_controller.yaml" ns="" command="load"/-->	
-	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name1)" command="load"/> 		
-
-	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name2)" command="load"/> 		
+	
+	
 
 	
- 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml" ns="/$(arg robot_name1)" command="load"/>
- 	<rosparam file="$(find ur_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name1)" command="load"/>
 
- 	<rosparam file="$(find ur_description)/config/ur5e/ur5e_controllers.yaml" ns="/$(arg robot_name2)" command="load"/>
- 	<rosparam file="$(find ur_description)/config/ros_impedance_controller.yaml" ns="/$(arg robot_name2)" command="load"/>
-
-
-
-        <!-- 5  - Loading the controllers (joint state publisher (install ros-kinetic-joint-state-controller) is necessary for robot_state publisher to compute the TFs) -->
-	<node name="controller_manager_$(arg robot_name1)" pkg="controller_manager" type="spawner" respawn="false"
-		output="screen" ns="/$(arg robot_name1)"  args="--namespace=/$(arg robot_name1)  joint_state_publisher $(arg position_controllers) --timeout 50 " />
-
-	<node name="controller_manager_$(arg robot_name2)" pkg="controller_manager" type="spawner" respawn="false"
-		output="screen" ns="/$(arg robot_name2)"  args="--namespace=/$(arg robot_name2)   joint_state_publisher $(arg position_controllers) --timeout 50 " />
-
-        <!--  rviz stuff -->
-        <!-- 6- load robot_state_publisher: converts joint states to TF transforms, it is just for rviz, etc -->
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"  ns="/$(arg robot_name1)" respawn="false" output="screen">
-		 <remap from="/joint_states" to="/$(arg robot_name1)/joint_states"/> 
-	</node>
-
-        <node name="robot_state_publisher2" pkg="robot_state_publisher" type="robot_state_publisher"  ns="/$(arg robot_name2)" respawn="false" output="screen">
-		 <remap from="/joint_states" to="/$(arg robot_name2)/joint_states"/> 
-	</node>
 
 	
 
         <!-- 7 run rviz -->
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_conf) -f world" if="$(arg rviz)"/>
 
-	<node name="goto0" pkg="ur_description" type="go0" args="1.0" output="screen"/>
+	
 
 </launch>
 
