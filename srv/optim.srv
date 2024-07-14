@@ -1,0 +1,14 @@
+float64 x0
+float64 y0
+float64 theta0
+float64 xf
+float64 yf
+float64 thetaf
+string plan_type
+---
+float64[] des_x
+float64[] des_y
+float64[] des_theta
+float64[] des_v
+float64[] des_omega
+float64 dt
