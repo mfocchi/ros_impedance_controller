@@ -7,40 +7,50 @@
 	<arg name="task_period" default="0.001" />
 	<arg name="world_name" default="climbingrobot2.world"/>
 
+	<!-- anchors-->
 	<arg name="spawn_x" default="0.0" />
 	<arg name="spawn_y" default="0.0" />
 	<arg name="spawn_z" default="2.0" />
 	<arg name="spawn_2x" default="0.0" />
 	<arg name="spawn_2y" default="0.0" />
 	<arg name="spawn_2z" default="2.0" />
-
-	<arg name="obstacle" default="false" />
-
-	<param name="anchorX" type="str" value="$(arg spawn_x)" />
-	<param name="anchorY" type="str" value="$(arg spawn_y)" />
- 	<param name="anchorZ" type="str" value="$(arg spawn_z)" />
-
-	<param name="anchor2X" type="str" value="$(arg spawn_2x)" />
-	<param name="anchor2Y" type="str" value="$(arg spawn_2y)" />
- 	<param name="anchor2Z" type="str" value="$(arg spawn_2z)" />
 	
-	<!-- old way: place mountain wrt to anchor-->
-	<!--arg name="mountain_pos_x" value="$(eval  arg('spawn_x') - 0.05)"/-->
-	
+	<!-- wall-->
+	<arg name="wall_inclination" default="0.0" />
 	<!-- new way: place mountain wrt to world (thickness)-->
-	<arg name="mountain_pos_x" value="-0.05"/>
+	<arg name="mountain_pos_x" value="-0.05"/>	
 
+	<!-- obstacle-->	
+	<arg name="obstacle" default="false" />
+	<arg name="obstacle_location_x" default="0.0" />
+	<arg name="obstacle_location_y" default="0.0" />
+	<arg name="obstacle_location_z" default="0.0" />
+	<arg name="obstacle_size_x" default="0.0" />
+	<arg name="obstacle_size_y" default="0.0" />
+	<arg name="obstacle_size_z" default="0.0" />
 
         <!-- load robot name into param server-->
         <param name="robot_name" type="str" value="$(arg robot_name)" />
 
-	<!-- 1 load robot description into param server-->
-	<param name="robot_description" command="$(find xacro)/xacro '$(find climbingrobot_description)/urdf/climbingrobot2.xacro' 
-		task_period:=$(arg task_period)  anchorX:=$(arg spawn_x)  anchorY:=$(arg spawn_y) anchorZ:=$(arg spawn_z)  anchor2X:=$(arg spawn_2x)  anchor2Y:=$(arg spawn_2y)  anchor2Z:=$(arg spawn_2z)"/>
-        <param name="robot_semantic_description" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climbingrobot2.srdf'" />
-
-	<!--  load climb wall into param server-->	
-	<param name="climb_wall" command="$(find xacro)/xacro  '$(find climbingrobot_description)/urdf/climb_wall2.xacro'  anchorZ:=$(arg spawn_z)  obstacle:=$(arg obstacle)"/>
+	<!-- 1 load robot description into param server-->    
+     	<include file="$(find climbingrobot_description)/launch/upload.launch">
+     		<arg name="robot_name" value="$(arg robot_name)"/>	
+		<arg name="task_period" value="$(arg task_period)"/>  
+		<arg name="spawn_x" value="$(arg spawn_x)"/> 
+		<arg name="spawn_y" value="$(arg spawn_y)"/> 
+		<arg name="spawn_z" value="$(arg spawn_z)"/> 
+		<arg name="spawn_2x" value="$(arg spawn_2x)"/> 
+		<arg name="spawn_2y" value="$(arg spawn_2y)"/> 
+		<arg name="spawn_2z" value="$(arg spawn_2z)"/> 
+		<arg name="wall_inclination" value="$(arg wall_inclination)"/> 
+		<arg name="obstacle" value="$(arg obstacle)"/> 
+		<arg name="obstacle_location_x" value="$(arg obstacle_location_x)"/> 
+		<arg name="obstacle_location_y" value="$(arg obstacle_location_y)"/> 
+		<arg name="obstacle_location_z" value="$(arg obstacle_location_z)"/> 
+		<arg name="obstacle_size_x" value="$(arg obstacle_size_x)"/> 
+		<arg name="obstacle_size_y" value="$(arg obstacle_size_y)"/> 
+		<arg name="obstacle_size_z" value="$(arg obstacle_size_z)"/>  "/>   
+	</include>
      
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
         <include file="$(find gazebo_ros)/launch/empty_world.launch" >
@@ -63,7 +73,7 @@
 
 	<!-- 4 -Loading  controllers settings -->
 	<rosparam file="$(find ros_impedance_controller)/config/joint_state_publisher.yaml" ns="/$(arg robot_name)" command="load"/> 		
-        <rosparam file="$(find climbingrobot_description)/config/ros_impedance_controller_climbingrobot2.yaml" ns="/$(arg robot_name)" command="load"/>
+        <rosparam file="$(find climbingrobot_description)/config/ros_impedance_controller_$(arg robot_name).yaml" ns="/$(arg robot_name)" command="load"/>
 
         <!-- 5  - Loading the controllers (joint state publisher (install ros-kinetic-joint-state-controller) is necessary for robot_state publisher to compute the TFs) -->
 	<node name="ros_impedance_controller" pkg="controller_manager" type="spawner" respawn="false"
