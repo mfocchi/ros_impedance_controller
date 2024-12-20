@@ -28,6 +28,7 @@
 	<arg name="obstacle_size_x" default="0.0" />
 	<arg name="obstacle_size_y" default="0.0" />
 	<arg name="obstacle_size_z" default="0.0" />
+	<arg name="double_propeller" default="false" />
 
         <!-- load robot name into param server-->
         <param name="robot_name" type="str" value="$(arg robot_name)" />
@@ -49,7 +50,8 @@
 		<arg name="obstacle_location_z" value="$(arg obstacle_location_z)"/> 
 		<arg name="obstacle_size_x" value="$(arg obstacle_size_x)"/> 
 		<arg name="obstacle_size_y" value="$(arg obstacle_size_y)"/> 
-		<arg name="obstacle_size_z" value="$(arg obstacle_size_z)"/>  "/>   
+		<arg name="obstacle_size_z" value="$(arg obstacle_size_z)"/>
+		<arg name="double_propeller" value="$(arg double_propeller)"/>  "/>   
 	</include>
      
      	<!-- 2 launch gzserver (with empty world)/ gzcclient: Starts Gazebo and load the empty world if requested to do so - -->
