@@ -1,14 +1,18 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.5)
 project(ros_impedance_controller)
 
+find_package(Eigen3 REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
-# ROS
-
-find_package( Eigen3 REQUIRED )
-
-find_package(catkin REQUIRED tf controller_interface
-            realtime_tools sensor_msgs message_generation gazebo_msgs  geometry_msgs     REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp
+                                        message_runtime
+                                        tf 
+                                        controller_interface
+                                        realtime_tools
+                                        sensor_msgs
+                                        message_generation
+                                        gazebo_msgs
+                                        geometry_msgs
+                                        control_toolbox)
 
 
 add_message_files(
@@ -37,7 +41,7 @@ generate_messages(DEPENDENCIES geometry_msgs)
 catkin_package(
   INCLUDE_DIRS include ${GAZEBO_INCLUDE_DIRS}
   LIBRARIES ${PROJECT_NAME} ${GAZEBO_LIBRARIES}
-  CATKIN_DEPENDS message_runtime sensor_msgs geometry_msgs
+  CATKIN_DEPENDS tf roscpp gazebo_msgs control_toolbox message_runtime sensor_msgs geometry_msgs
 
 
 )
