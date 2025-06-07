@@ -18,6 +18,8 @@
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
   <depend>geometry_msgs</depend>
+  <depend>gazebo_msgs</depend>
+  <depend>control_toolbox</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <controller_interface plugin="${prefix}/controller_plugin.xml"/>
